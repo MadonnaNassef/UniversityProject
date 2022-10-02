@@ -6,8 +6,10 @@ import AuthRouter from './controllers/auth.controller.js';
 import logger from './helpers/middlewares/logger.js';
 import dotenv from 'dotenv';
 import errorHandler from './helpers/middlewares/errorHandler.js';
+import { PrismaClient } from '@prisma/client';
 dotenv.config();
 const app = express();
+const prisma = new PrismaClient();
 
 // -- Middleware --
 app.use(express.json());
@@ -26,3 +28,4 @@ app.listen(PORT, () => {
 });
 
 export default app;
+export { prisma };
