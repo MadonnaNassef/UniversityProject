@@ -1,15 +1,27 @@
-import lectures from "../../helpers/db/lecture.db.js";
-import { badRequestResponse } from "../../helpers/functions/ResponseHandler.js";
-import { okResponse } from "./../../helpers/functions/ResponseHandler.js";
-export function getLecturerId(req, res, next) {
-  try {
-    const { id } = req.params;
-    const lectureIndex = lectures.findIndex((lecture) => lecture.id === parseInt(id));
-    if (lectureIndex === -1) {
-      return badRequestResponse(res, "user not found");
-    }
-    return okResponse(res, "User fetched succesfully", lectures[lectureIndex]);
-  } catch (err) {
-    next(err);
-  }
+import { badRequestResponse } from '../../helpers/functions/ResponseHandler.js';
+import { prisma } from '../../index.js';
+import { okResponse } from './../../helpers/functions/ResponseHandler.js';
+export async function getLecturerId(req, res, next) {
+	try {
+		const { id } = req.params;
+		const lectureById = await prisma.lecture.findUnique({
+			where: {
+				id: parseInt(id),
+			},
+			include: {
+				teacher: {
+					select: {
+						id: true,
+						name: true,
+					},
+				},
+			},
+		});
+		if (!lectureById) {
+			return badRequestResponse(res, 'Lecture not found');
+		}
+		return okResponse(res, 'User fetched succesfully', lectureById);
+	} catch (err) {
+		next(err);
+	}
 }

@@ -1,19 +1,26 @@
-import Lecture from '../../helpers/db/lecture.db.js';
-import User from '../../helpers/db/users.db.js';
-import registeredLectures from '../../helpers/db/registeredLectures.db.js';
 import {
 	badRequestResponse,
+	conflictResponse,
 	notFoundResponse,
 	okResponse,
 } from '../../helpers/functions/ResponseHandler.js';
+import { prisma } from '../../index.js';
 export async function registerLecture(req, res, next) {
 	try {
 		const { lectureId, userId } = req.body;
-		const lecture = Lecture.find((lecture) => lecture.id == lectureId);
+		const lecture = await prisma.lecture.findUnique({
+			where: {
+				id: parseInt(lectureId),
+			},
+		});
 		if (!lecture) {
 			return notFoundResponse(res, 'Lecture not found');
 		}
-		const user = User.find((user) => user.id == userId);
+		const user = await prisma.user.findUnique({
+			where: {
+				id: parseInt(userId),
+			},
+		});
 		if (!user) {
 			return notFoundResponse(res, 'User not found');
 		}
@@ -23,26 +30,27 @@ export async function registerLecture(req, res, next) {
 				'Only students can register to lectures',
 			);
 		}
-		if (
-			registeredLectures.some(
-				(lecReg) =>
-					lecReg.userId == userId && lecReg.lectureId == lectureId,
-			)
-		) {
-			return badRequestResponse(
+		const registeredLecture = await prisma.registeredLectures.findFirst({
+			where: {
+				lectureId: parseInt(lectureId),
+				userId: parseInt(userId),
+			},
+		});
+		if (registeredLecture) {
+			return conflictResponse(
 				res,
-				'User already registered to this lecture',
+				'You have already registered to this lecture',
 			);
 		}
-		const registeredLecture = {
-			lectureId,
-			userId,
-		};
-		registeredLectures.push(registeredLecture);
+		// const registeredLecture = {
+		// 	lectureId,
+		// 	userId,
+		// };
+		// registeredLectures.push(registeredLecture);
 		return okResponse(
 			res,
 			'Lecture registered successfully',
-			registeredLecture,
+			// registeredLecture,
 		);
 	} catch (err) {
 		next(err);

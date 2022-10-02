@@ -1,15 +1,17 @@
-import Lecture from '../../helpers/db/lecture.db.js';
-import User from '../../helpers/db/users.db.js';
-import registeredLectures from '../../helpers/db/registeredLectures.db.js';
 import {
 	okResponse,
 	notFoundResponse,
 	badRequestResponse,
 } from '../../helpers/functions/ResponseHandler.js';
-export function getRegisteration(req, res, next) {
+import { prisma } from '../../index.js';
+export async function getRegisteration(req, res, next) {
 	try {
 		const { userId } = req.params;
-		const user = User.find((user) => user.id == userId);
+		const user = await prisma.user.findUnique({
+			where: {
+				id: parseInt(userId),
+			},
+		});
 		if (!user) {
 			return notFoundResponse(res, 'User not found');
 		}
@@ -19,14 +21,29 @@ export function getRegisteration(req, res, next) {
 				'Only students can access their lectures',
 			);
 		}
-		const userLectures = registeredLectures.filter(
-			(regLec) => regLec.userId == userId,
-		);
-		const lectures = userLectures.map((regLec) => {
-			const lecture = Lecture.find((lec) => lec.id == regLec.lectureId);
-			return lecture;
+		const registeredLectures = await prisma.registeredLectures.findMany({
+			where: {
+				userId: parseInt(userId),
+			},
+			include: {
+				lecture: {
+					include: {
+						teacher: {
+							select: {
+								id: true,
+								name: true,
+							},
+						},
+					},
+				},
+			},
 		});
-		return okResponse(res, 'Lectures retrieved successfully', lectures);
+
+		return okResponse(
+			res,
+			'Lectures retrieved successfully',
+			registeredLectures,
+		);
 	} catch (err) {
 		next(err);
 	}
