@@ -1,11 +1,11 @@
 import Lecture from '../../helpers/db/lecture.db.js';
 import User from '../../helpers/db/users.db.js';
-import registeredLectures from '../../helpers/db/registeredLectures.db';
+import registeredLectures from '../../helpers/db/registeredLectures.db.js';
 import {
 	badRequestResponse,
 	notFoundResponse,
 	okResponse,
-} from '../../helpers/functions/ResponseHandler';
+} from '../../helpers/functions/ResponseHandler.js';
 export async function registerLecture(req, res, next) {
 	try {
 		const { lectureId, userId } = req.body;
